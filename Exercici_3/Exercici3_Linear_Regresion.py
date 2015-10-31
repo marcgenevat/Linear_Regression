@@ -100,6 +100,8 @@ print '\nThe variable %d is the least generalizable one, getting a MSE of:' % nu
 # In order to get the variance, it's needed to find the mean
 # VAR = (1/N)*sum((mean-y)^2)   mean = (1/N)*sum(y)
 
+print 'Computing the coefficient of determination...'
+
 mean = sum(Z) / len(Z)
 
 VAR = sum((mean-Z)**2) / len(Z)
