@@ -20,70 +20,107 @@ dot = np.dot	#Multiplier
 inv = np.linalg.inv #Inversor
 
 # Dummy features
-Bias = np.ones((506,1))	#Bias term vector
+Bias = np.ones((len(y),1))	#Bias term vector
 
 # Fitting the parameters: theta = (X'*X)^-1*X'*y
 # Computing the average of the target value
-theta = dot(dot(inv(dot(Bias.T, Bias)), Bias.T), y)
+theta = theta_calc(Bias,y)[0]
+
+print 'The average of the target value is:' , theta
 
 # MSE = (1/N)*sum((y-X*theta)^2)
 # Computing MSE obtained using it as a constant prediction
 print '\nMSE as a constant prediction: ' , MSE(y,Bias,theta)
 
 
+print '\n\n#####Solving Q3#####'
+
 # Splitting data in 50/50 for training and testing
-print '\nSplitting data...'
 
 #Training 
 data_train = data[:half,:-1]	#Training features
-
 output_train = data[:half,-1]	#Training labels
 
 #Testing
 data_test = data[half:,:-1]		#Testing features
-
 output_test = data[half:,-1]	#Testing labels
 
-# Training a linear regressor model
-print '\n\nTraining with each variable individually...'
+# Training and testing a linear regressor model
+print '\nTraining and testing with each variable individually...'
 
 list_mse_train=[]
 list_theta=[]
-for i in range(0,len(data[0])-1):
-    train_features = np.hstack((Bias[:half], data_train[:,i].reshape(half,1)))	#Stack feature array (vector) with Bias term
-    list_theta.append(theta_calc(train_features,output_train)[0])			#Save every theta for each different feature	
-    list_mse_train.append(MSE(output_train,train_features,list_theta[i]))		#Save every MSE for each theta to a list
-
-print '\nThe variable %d is the most informative one, getting a MSE of:' % list_mse_train.index(min(list_mse_train)), min(list_mse_train)
-
-# Testing the linear regressor model
-print '\n\nTesting with each variable individually...'
-
 list_mse_test=[]
 for i in range(0,len(data[0])-1):
-    test_features = np.hstack((Bias[:half], data_test[:,i].reshape(half,1)))	#Stack feature array (vector) with Bias term
-    list_mse_test.append(MSE(output_test,test_features,list_theta[i]))	#Save every MSE for each theta to a list
-    
-print '\nThe most generalizable variable is:', list_mse_test.index(min(list_mse_test)), 'getting a MSE of:', min(list_mse_test)
-print '\nThe worst generalizable variable is:', list_mse_test.index(max(list_mse_test)), 'getting a MSE of:', max(list_mse_test)
+	train_features = np.hstack((Bias[:half], data_train[:,i].reshape(half,1)))	#Stack a feature array (vector) with Bias term (training)
+	test_features = np.hstack((Bias[:half], data_test[:,i].reshape(half,1)))	#Stack a feature array (vector) with Bias term (testing)
+	list_theta.append(theta_calc(train_features,output_train)[0])			#Save every theta for each different feature	
+	list_mse_train.append(MSE(output_train,train_features,list_theta[i]))		#Save every MSE for each theta to a list (training)
+	list_mse_test.append(MSE(output_test,test_features,list_theta[i]))	#Save every MSE for each theta to a list (testing)
+
+# Answering the Q3's questions
+print '\nThe variable %d is the most informative one, getting a MSE of:' % list_mse_train.index(min(list_mse_train)), min(list_mse_train)
+print '\nThe most generalizable variable is the number', list_mse_test.index(min(list_mse_test)), 'getting a MSE of:', min(list_mse_test)
+print '\nThe worst generalizable variable is the number', list_mse_test.index(max(list_mse_test)), 'getting a MSE of:', max(list_mse_test)
 
 
 # Computing the coefficient of determination
-# R^2 = 1-FUV
+mean = sum(output_test) / half		#mean = (1/N)*sum(y)
+VAR = sum((mean-output_test)**2) / half		#VAR = (1/N)*sum((mean-y)^2)
+FUV = list_mse_test/VAR		#Fraction of Variance Unexplained (FUV) -> FUV = MSE/VAR
+Coeff_Det_Q3 = 1 - FUV		#Coefficient of determination -> R^2 = 1-FUV
 
-# First, it's needed to have the value of Fraction of Variance Unexplained (FUV)
-# FUV = MSE/VAR
+print '\n\nThe most useful variable is %d giving a coefficient of determination (R^2) of: ' % Coeff_Det_Q3.argmax(axis=0), max(Coeff_Det_Q3)
 
-# In order to get the variance, it's needed to find the mean
-# VAR = (1/N)*sum((mean-y)^2)   mean = (1/N)*sum(y)
 
-mean = sum(output_test) / half
 
-VAR = sum((mean-output_test)**2) / half
+print '\n\n#####Solving Q4#####'
 
-FUV = list_mse_test/VAR
+print '\nTraining and testing a model with all the variables plus a bias term...'
 
-Coeff_Det = 1 - FUV
+# Taking a training input with all the variables plus the bias term
+train_features = np.hstack((Bias[:half], data_train.reshape(half,data_train.shape[1]))) #Stack all features with Bias term (training)
+test_features = np.hstack((Bias[:half], data_test.reshape(half,data_test.shape[1]))) #Stack all features with Bias term (testing)
+theta = theta_calc(train_features,output_train)[0]	#Calculating the model (theta)
+MSE_train = MSE(output_train,train_features,theta)	#Calculating the error (training)
+MSE_test = MSE(output_test,test_features,theta)			#Calculating the error (testing)
 
-print '\n\nThe most useful variable is %d giving a coefficient of determination (R^2) of: ' % Coeff_Det.argmax(axis=0), max(Coeff_Det)
-print '\n'
+mean = sum(output_test) / half		#mean = (1/N)*sum(y)
+VAR = sum((mean-output_test)**2) / half		#VAR = (1/N)*sum((mean-y)^2)
+FUV = MSE_test / VAR		#Fraction of Variance Unexplained (FUV) -> FUV = MSE/VAR
+Coeff_Det_Q4 = 1 - FUV		#Coefficient of determination -> R^2 = 1-FUV
+
+print '\nThe resulting MSE in the training phase is:' , MSE_train
+print '\nThe resulting MSE in the testing phase is:' , MSE_test
+print '\nThe resulting Coefficient of determination is:' , Coeff_Det_Q4
+
+
+print '\n\nTrying over without the worst-performing variable found at the Q3...'
+
+# Removing the worst-performing variable in the features array
+data_train_Q4 = np.delete(data_train,Coeff_Det_Q3.argmin(axis=0),axis=1)
+data_test_Q4 = np.delete(data_test,Coeff_Det_Q3.argmin(axis=0),axis=1)
+
+# Starting over the experiment
+train_features = np.hstack((Bias[:half], data_train_Q4.reshape(half,data_train_Q4.shape[1])))	#Stack all features with Bias term (training)
+test_features = np.hstack((Bias[:half], data_test_Q4.reshape(half,data_test_Q4.shape[1]))) #Stack all features with Bias term (testing)
+theta = theta_calc(train_features,output_train)[0]	#Calculating the model (theta)
+MSE_train = MSE(output_train,train_features,theta)	#Calculating the error (training)
+MSE_test = MSE(output_test,test_features,theta)			#Calculating the error (testing)
+
+mean = sum(output_test) / half		#mean = (1/N)*sum(y)
+VAR = sum((mean-output_test)**2) / half		#VAR = (1/N)*sum((mean-y)^2)
+FUV = MSE_test / VAR		#Fraction of Variance Unexplained (FUV) -> FUV = MSE/VAR
+Coeff_Det_Q4 = 1 - FUV		#Coefficient of determination -> R^2 = 1-FUV
+
+print '\nThe resulting MSE in the training phase is:' , MSE_train
+print '\nThe resulting MSE in the testing phase is:' , MSE_test
+print '\nThe resulting Coefficient of determination is:' , Coeff_Det_Q4
+
+print '\nThe model is much better!!!'
+
+
+print '\n\n#####Solving Q5#####'
+
+
+
