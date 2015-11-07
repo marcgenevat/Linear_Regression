@@ -85,5 +85,5 @@ FUV = list_mse_test/VAR
 
 Coeff_Det = 1 - FUV
 
-print '\nThe most useful variable is %d giving a coefficient of determination (R^2) of: ' % Coeff_Det.argmax(axis=0), max(Coeff_Det)
+print '\n\nThe most useful variable is %d giving a coefficient of determination (R^2) of: ' % Coeff_Det.argmax(axis=0), max(Coeff_Det)
 print '\n'
